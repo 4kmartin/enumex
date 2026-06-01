@@ -1,39 +1,10 @@
+use crate::common::{Browser, FilePath, Files, Publisher};
 use crate::error::{ExtError, Result, convert_result};
 use serde_json::Value;
-use std::{fmt::Display, fs, io::Read, path::Path};
-pub(crate) enum Browser {
-    Chrome,
-    Edge,
-}
+use std::{fs::read_dir, io::Read, path::Path};
 
 #[cfg(windows)]
 use crate::windows::{get_chromium_root, get_firefox_root};
-
-impl Display for Browser {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Browser::Chrome => write!(f, "Chrome"),
-            Browser::Edge => write!(f, "Edge"),
-        }
-    }
-}
-
-pub(crate) enum Publisher {
-    Google,
-    Microsoft,
-}
-
-impl Display for Publisher {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Publisher::Google => write!(f, "Google"),
-            Publisher::Microsoft => write!(f, "Microsoft"),
-        }
-    }
-}
-
-pub(crate) type FilePath = Box<Path>;
-pub(crate) type Files = Vec<FilePath>;
 
 fn print_extensions(extensions: Vec<Result<String>>) -> Result<()> {
     for ext in extensions {
@@ -83,12 +54,10 @@ fn add_to_path(path: &Path, added: &str) -> FilePath {
 }
 
 fn ls(p: &Path) -> Result<Files> {
-    Ok(
-        convert_result(fs::read_dir(p), ExtError::DirectoryNotFound)?
-            .filter_map(|r| r.ok())
-            .map(|e| e.path().into_boxed_path())
-            .collect::<Files>(),
-    )
+    Ok(convert_result(read_dir(p), ExtError::DirectoryNotFound)?
+        .filter_map(|r| r.ok())
+        .map(|e| e.path().into_boxed_path())
+        .collect::<Files>())
 }
 
 fn get_chromium_ext() -> Result<()> {
