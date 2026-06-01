@@ -1,10 +1,14 @@
 mod common;
 mod error;
+mod interface;
 #[cfg(windows)]
 mod windows;
 
-use crate::common::get_extensions;
-
 fn main() -> error::Result<()> {
-    get_extensions()
+    use clap::Parser;
+    let args = interface::Interface::parse();
+    if !args.json {
+        return common::get_extensions();
+    };
+    Ok(())
 }
