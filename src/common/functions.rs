@@ -60,21 +60,23 @@ fn ls(p: &Path) -> Result<Files> {
         .collect::<Files>())
 }
 
-fn get_chromium_ext() -> Result<()> {
+fn get_chromium_ext(path_override: &Option<String>) -> Result<Vec<Result<String>>> {
+    let mut output = Vec::new();
     for (publisher, browser) in [
         (Publisher::Microsoft, Browser::Edge),
         (Publisher::Google, Browser::Chrome),
     ] {
-        let root = get_chromium_root(publisher, browser)?;
+        let root = get_chromium_root(publisher, browser, path_override)?;
         if let Ok(outs) = chromium_ext_dir(root) {
-            print_extensions(
-                outs.iter()
+            output.append(
+                &mut outs
+                    .iter()
                     .map(|ext_dir| chromium_manifest(ext_dir))
                     .collect::<Vec<Result<String>>>(),
-            )?;
+            )
         }
     }
-    Ok(())
+    Ok(output)
 }
 
 fn firefox_ext_paths(root: FilePath) -> Result<Files> {
@@ -85,30 +87,52 @@ fn firefox_ext_paths(root: FilePath) -> Result<Files> {
         .collect::<Files>())
 }
 
-fn firefox_ext_file(file: &Path) -> Result<String> {
+fn firefox_ext_file(file: &Path) -> Result<Vec<String>> {
     match read_json(file)?["addons"].as_array() {
         Some(v) => Ok(v
             .iter()
             .filter(|x| x["type"] == "extension")
             .map(|x| x["defaultlocale"]["name"].to_string())
-            .collect::<Vec<String>>()
-            .join("\n")),
+            .collect::<Vec<String>>()),
         None => Err(ExtError::JsonParsingError(
             "failed to enumerate \"addons\" field".to_string(),
         )),
     }
 }
 
-fn get_firefox_ext() -> Result<()> {
-    print_extensions(
-        firefox_ext_paths(get_firefox_root()?)?
-            .iter()
-            .map(|file| firefox_ext_file(file))
-            .collect::<Vec<Result<String>>>(),
-    )
+fn get_firefox_ext(path_override: &Option<String>) -> Result<Vec<Result<String>>> {
+    let mut out: Vec<Result<String>> = Vec::new();
+    if let Ok(ext_paths) = firefox_ext_paths(get_firefox_root(path_override)?) {
+        for file in ext_paths {
+            let mut exts = firefox_ext_file(&file)?
+                .iter()
+                .map(|x| Ok(x.to_string()))
+                .collect::<Vec<Result<String>>>();
+            out.append(&mut exts);
+        }
+    };
+    Ok(out)
 }
 
-pub(crate) fn get_extensions() -> Result<()> {
-    get_chromium_ext()?;
-    get_firefox_ext()
+pub(crate) fn get_extensions(args: crate::interface::Interface) -> Result<()> {
+    let mut extensions = get_chromium_ext(&args.override_localappdata_path)?;
+    extensions.append(&mut get_firefox_ext(&args.override_appdata_path)?);
+    if args.json {
+        print_extensions_json(extensions)
+    } else {
+        print_extensions(extensions)
+    }
+}
+
+fn print_extensions_json(extensions: Vec<Result<String>>) -> Result<()> {
+    let mut out = Vec::new();
+    for ext in extensions {
+        if let Ok(name) = ext {
+            let json = serde_json::json!({"name": name});
+            out.append(&mut vec![json])
+        }
+    }
+    println!("{}", serde_json::json!({"extensions": out}).to_string());
+
+    Ok(())
 }

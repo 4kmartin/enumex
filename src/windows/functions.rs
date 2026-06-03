@@ -1,11 +1,13 @@
-use clap::Parser;
-
 use crate::common::{Browser, FilePath, Publisher};
 use crate::error::{ExtError, Result, convert_result};
 use std::path::PathBuf;
 
-pub(crate) fn get_chromium_root(publisher: Publisher, browser: Browser) -> Result<FilePath> {
-    match crate::interface::Interface::parse().override_localappdata_path {
+pub(crate) fn get_chromium_root(
+    publisher: Publisher,
+    browser: Browser,
+    path_override: &Option<String>,
+) -> Result<FilePath> {
+    match path_override {
         Some(path) => Ok(PathBuf::from(format!(
             "{}\\{}\\{}\\User Data\\Default\\extensions",
             path, publisher, browser
@@ -21,8 +23,8 @@ pub(crate) fn get_chromium_root(publisher: Publisher, browser: Browser) -> Resul
     }
 }
 
-pub(crate) fn get_firefox_root() -> Result<FilePath> {
-    match crate::interface::Interface::parse().override_appdata_path {
+pub(crate) fn get_firefox_root(path_override: &Option<String>) -> Result<FilePath> {
+    match path_override {
         Some(path) => {
             Ok(PathBuf::from(format!("{}\\Mozilla\\Firefox\\Profiles", path)).into_boxed_path())
         }

@@ -1,3 +1,5 @@
+use clap::Parser;
+
 mod common;
 mod error;
 mod interface;
@@ -5,10 +7,6 @@ mod interface;
 mod windows;
 
 fn main() -> error::Result<()> {
-    use clap::Parser;
     let args = interface::Interface::parse();
-    if !args.json {
-        return common::get_extensions();
-    };
-    Ok(())
+    return common::get_extensions(args);
 }
