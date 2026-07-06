@@ -6,6 +6,9 @@ use std::{fs::read_dir, io::Read, path::Path};
 #[cfg(windows)]
 use crate::windows::{get_chromium_root, get_firefox_root};
 
+#[cfg(target_os = "linux")]
+use crate::linux::{get_chromium_root, get_firefox_root};
+
 fn print_extensions(extensions: Vec<Result<String>>) -> Result<()> {
     for ext in extensions {
         println!("{}", ext?.replace("\"", ""));

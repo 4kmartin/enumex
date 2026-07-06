@@ -4,6 +4,7 @@ use std::path::Path;
 pub(crate) enum Browser {
     Chrome,
     Edge,
+    Chromium,
 }
 
 impl Display for Browser {
@@ -11,6 +12,7 @@ impl Display for Browser {
         match self {
             Browser::Chrome => write!(f, "Chrome"),
             Browser::Edge => write!(f, "Edge"),
+            Browser::Chromium => write!(f, "Chromium"),
         }
     }
 }
