@@ -16,7 +16,8 @@ pub(crate) struct Interface {
     #[arg(short = 'A', long)]
     pub(crate) override_appdata_path: Option<String>,
 
+    /// provide an override for the $HOME directory in the event that environment variables cannot be relied on
     #[cfg(target_os = "linux")]
-    #[arg(short = 'h', long)]
+    #[arg(short = 'H', long)]
     pub(crate) override_home_dir: Option<String>,
 }
