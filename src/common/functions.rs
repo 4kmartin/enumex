@@ -118,8 +118,14 @@ fn get_firefox_ext(path_override: &Option<String>) -> Result<Vec<Result<String>>
 }
 
 pub(crate) fn get_extensions(args: crate::interface::Interface) -> Result<()> {
+    #[cfg(windows)]
     let mut extensions = get_chromium_ext(&args.override_localappdata_path)?;
+    #[cfg(windows)]
     extensions.append(&mut get_firefox_ext(&args.override_appdata_path)?);
+    #[cfg(target_os = "linux")]
+    let mut extensions = get_chromium_ext(&args.override_home_dir)?;
+    #[cfg(target_os = "linux")]
+    extensions.append(&mut get_firefox_ext(&args.override_home_dir)?);
     if args.json {
         print_extensions_json(extensions)
     } else {

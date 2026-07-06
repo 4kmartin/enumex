@@ -15,4 +15,8 @@ pub(crate) struct Interface {
     #[cfg(windows)]
     #[arg(short = 'A', long)]
     pub(crate) override_appdata_path: Option<String>,
+
+    #[cfg(target_os = "linux")]
+    #[arg(short = 'h', long)]
+    pub(crate) override_home_dir: Option<String>,
 }
